@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vika's Physics Club</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #08080f;
+      --bg-alt: #0e0e1a;
+      --bg-card: rgba(255,255,255,0.03);
+      --border: rgba(255,255,255,0.07);
+      --text: #e8e8f0;
+      --text-dim: #8888a0;
+      --accent: #7b6cf6;
+      --accent-glow: rgba(123,108,246,0.35);
+      --pink: #f06292;
+      --cyan: #4dd0e1;
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1.2rem 2.5rem;
+      background: rgba(8,8,15,0.7);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.3s;
+    }
+    .nav-logo {
+      font-family: var(--font-display);
+      font-weight: 600; font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      color: var(--text-dim); text-decoration: none; font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* ── HERO ── */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    #hero-canvas {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+    }
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(8,8,15,0.3) 0%,
+        rgba(8,8,15,0.55) 50%,
+        rgba(8,8,15,0.92) 100%
+      );
+    }
+    .hero-content {
+      position: relative; z-index: 2;
+      text-align: center;
+      max-width: 720px;
+      padding: 0 1.5rem;
+    }
+    .hero-content h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2.8rem, 6vw, 4.5rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 1.2rem;
+    }
+    .hero-content h1 .highlight { color: var(--accent); }
+    .hero-tagline {
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
+      color: var(--text-dim);
+      max-width: 520px;
+      margin: 0 auto 2.5rem;
+      font-weight: 300;
+    }
+    .hero-quote {
+      font-style: italic; color: var(--text-dim);
+      font-size: 0.9rem; margin-top: 2.5rem;
+      opacity: 0.6;
+    }
+    .scroll-hint {
+      position: absolute; bottom: 2rem; left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      animation: float 2.5s ease-in-out infinite;
+      color: var(--text-dim); opacity: 0.5;
+      font-size: 1.4rem;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(8px); }
+    }
+
+    /* ── FLOATING SYMBOLS ── */
+    .floating-symbols {
+      position: absolute; inset: 0; z-index: 1;
+      pointer-events: none; overflow: hidden;
+    }
+    .floating-symbols span {
+      position: absolute;
+      font-family: var(--font-mono);
+      color: rgba(255,255,255,0.04);
+      font-size: 2rem;
+      animation: drift linear infinite;
+    }
+    @keyframes drift {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-10vh) rotate(30deg); opacity: 0; }
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.9rem 2rem;
+      border-radius: 9999px;
+      font-family: var(--font-display);
+      font-weight: 500; font-size: 1rem;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      cursor: pointer; border: none;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 24px var(--accent-glow);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 40px var(--accent-glow);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .btn-join {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 24px var(--accent-glow);
+    }
+    .btn-join:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 40px var(--accent-glow);
+    }
+    .btn-group { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    /* ── SECTIONS ── */
+    section {
+      padding: 7rem 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.8rem;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 2.8rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+    }
+    .section-subtitle {
+      color: var(--text-dim);
+      max-width: 620px;
+      font-size: 1.05rem;
+      font-weight: 300;
+    }
+
+    /* ── ABOUT / PILLARS ── */
+    .pillars {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+    .pillar {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .pillar:hover {
+      border-color: rgba(123,108,246,0.3);
+      transform: translateY(-4px);
+    }
+    .pillar-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+    .pillar h3 {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      margin-bottom: 0.6rem;
+    }
+    .pillar p {
+      color: var(--text-dim);
+      font-size: 0.92rem;
+    }
+
+    /* ── FIRST BOOK ── */
+    #first-book { background: var(--bg-alt); max-width: 100%; }
+    .book-section-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .book-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      margin-top: 3rem;
+      align-items: start;
+    }
+    .book-info h3 {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+    }
+    .book-author {
+      color: var(--text-dim);
+      margin-bottom: 1.2rem;
+      font-style: italic;
+    }
+    .book-description {
+      color: var(--text-dim);
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
+    .book-details {
+      list-style: none;
+      display: flex; flex-direction: column; gap: 0.7rem;
+    }
+    .book-details li {
+      display: flex; align-items: baseline; gap: 0.6rem;
+      font-size: 0.92rem;
+    }
+    .book-details li::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+      margin-top: 0.5rem;
+    }
+
+    /* ── INTERACTIVE DEMO ── */
+    .demo-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex; flex-direction: column; gap: 1rem;
+    }
+    .demo-header {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .demo-title {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+    .demo-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+    }
+    #demo-canvas {
+      width: 100%;
+      aspect-ratio: 4/3;
+      border-radius: 10px;
+      cursor: crosshair;
+      background: #000;
+    }
+    .demo-controls {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+    }
+    .func-btn {
+      padding: 0.45rem 0.9rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .func-btn:hover { border-color: var(--accent); color: var(--text); }
+    .func-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .demo-readout {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      min-height: 1.2em;
+    }
+
+    /* ── FUTURE BOOKS ── */
+    .tentative-note {
+      background: rgba(240,98,146,0.08);
+      border: 1px solid rgba(240,98,146,0.2);
+      border-radius: 10px;
+      padding: 1rem 1.5rem;
+      color: var(--pink);
+      font-size: 0.9rem;
+      margin-bottom: 2.5rem;
+      display: inline-block;
+    }
+    .book-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.2rem;
+    }
+    .book-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.8rem;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .book-card:hover {
+      border-color: rgba(123,108,246,0.25);
+      transform: translateY(-3px);
+    }
+    .book-card-curator {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.6rem;
+    }
+    .book-card-curator.vika { color: var(--pink); }
+    .book-card-curator.alex { color: var(--cyan); }
+    .book-card h4 {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      margin-bottom: 0.25rem;
+    }
+    .book-card .author {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      font-style: italic;
+      margin-bottom: 0.7rem;
+    }
+    .book-card p {
+      font-size: 0.88rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+    .book-card .duration {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      margin-top: 0.8rem;
+    }
+
+    /* ── TEAM ── */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+    .person-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem;
+    }
+    .person-avatar {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display);
+      font-size: 1.5rem; font-weight: 700;
+      margin-bottom: 1.2rem;
+    }
+    .person-avatar.vika { background: rgba(240,98,146,0.15); color: var(--pink); }
+    .person-avatar.alex { background: rgba(77,208,225,0.15); color: var(--cyan); }
+    .person-card h3 {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      margin-bottom: 0.3rem;
+    }
+    .person-role {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      font-style: italic;
+    }
+    .person-card p {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+    .person-links {
+      margin-top: 1.2rem;
+      display: flex; gap: 1rem;
+    }
+    .person-links a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+    .person-links a:hover { color: var(--text); }
+
+    /* ── JOIN FOOTER ── */
+    #join {
+      text-align: center;
+      padding-bottom: 5rem;
+    }
+    .join-image {
+      width: min(320px, 80vw);
+      border-radius: 20px;
+      margin-top: 3rem;
+      border: 1px solid var(--border);
+    }
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── SCROLL ANIMATIONS ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 1rem 1.2rem; }
+      .nav-links { display: none; }
+      section { padding: 4rem 1.2rem; }
+      .book-layout { grid-template-columns: 1fr; gap: 2.5rem; }
+      .team-grid { grid-template-columns: 1fr; }
+      .book-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo"><span>V</span>ika's Physics Club</div>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#first-book">First Book</a></li>
+    <li><a href="#future">Explore</a></li>
+    <li><a href="#team">Team</a></li>
+    <li><a href="#join">Join</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-overlay"></div>
+  <div class="floating-symbols" id="floating-symbols"></div>
+  <div class="hero-content">
+    <h1>Vika's <span class="highlight">Physics</span> Club</h1>
+    <p class="hero-tagline">A weekly reading seminar exploring the beautiful mathematics and deep ideas behind our universe</p>
+    <div class="btn-group">
+      <a href="#join" class="btn btn-join">Join the Club</a>
+      <a href="#first-book" class="btn btn-secondary">See what we're reading</a>
+    </div>
+    <p class="hero-quote">"The purpose of computing is insight, not numbers." &mdash; Richard Hamming</p>
+  </div>
+  <div class="scroll-hint">&darr;</div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="reveal">
+    <p class="section-label">// what we do</p>
+    <h2 class="section-title">Deep reading, together</h2>
+    <p class="section-subtitle">
+      A small, serious club for anyone who wants to go deep into theoretical physics and mathematics.
+      Every week we gather to read, discuss, prove, and code our way through carefully chosen books.
+    </p>
+  </div>
+  <div class="pillars reveal">
+    <div class="pillar">
+      <span class="pillar-icon">&int;</span>
+      <h3>Read</h3>
+      <p>Deep engagement with books chosen for conceptual richness and mathematical beauty &mdash; from complex analysis to quantum field theory.</p>
+    </div>
+    <div class="pillar">
+      <span class="pillar-icon">&hbar;</span>
+      <h3>Discuss</h3>
+      <p>Weekly meetings of ~1.5 hours. Proofs on the board, ideas in the air, digressions welcome. We learn by explaining to each other.</p>
+    </div>
+    <div class="pillar">
+      <span class="pillar-icon">&nabla;</span>
+      <h3>Create</h3>
+      <p>Code visualizations in Python, present proofs, build interactive demos, design problem sets. Understanding through doing.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FIRST BOOK -->
+<section id="first-book">
+  <div class="book-section-inner">
+    <div class="reveal">
+      <p class="section-label">// now starting</p>
+      <h2 class="section-title">Our first book</h2>
+    </div>
+    <div class="book-layout">
+      <div class="book-info reveal">
+        <h3>Visual Complex Functions</h3>
+        <p class="book-author">Elias Wegert &mdash; An Introduction with Phase Portraits</p>
+        <p class="book-description">
+          Our journey begins with one of the most visually stunning areas of mathematics.
+          Phase portraits use color to reveal the hidden structure of complex functions &mdash;
+          where zeros and poles live, how functions behave near singularities,
+          and what makes analytic functions beautiful. The hue encodes the argument (phase)
+          of the output, turning abstract algebra into vivid, intuitive images.
+        </p>
+        <ul class="book-details">
+          <li>7 chapters over approximately 2 months</li>
+          <li>Weekly meetings led by Alex</li>
+          <li>Reading, presenting proofs and key concepts</li>
+          <li>Coding our own phase portraits in Python</li>
+          <li>Dense but short &mdash; a perfect first sprint</li>
+        </ul>
+      </div>
+      <div class="demo-container reveal">
+        <div class="demo-header">
+          <div>
+            <p class="demo-title">Interactive Phase Portrait</p>
+            <p class="demo-subtitle">Select a function &mdash; color = argument of f(z)</p>
+          </div>
+        </div>
+        <canvas id="demo-canvas"></canvas>
+        <div class="demo-controls">
+          <button class="func-btn active" data-func="0">z&sup2;</button>
+          <button class="func-btn" data-func="1">z&sup3;&minus;1</button>
+          <button class="func-btn" data-func="2">1/z</button>
+          <button class="func-btn" data-func="3">sin(z)</button>
+          <button class="func-btn" data-func="4">(z&sup2;&minus;1)/(z&sup2;+1)</button>
+        </div>
+        <div class="demo-readout" id="demo-readout">Hover over the portrait to inspect values</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FUTURE BOOKS -->
+<section id="future">
+  <div class="reveal">
+    <p class="section-label">// on the horizon</p>
+    <h2 class="section-title">Future explorations</h2>
+    <p class="tentative-note">These are books we're considering for future cycles. Nothing is set in stone &mdash; we'll decide together as a club.</p>
+  </div>
+  <div class="book-grid">
+    <div class="book-card reveal">
+      <p class="book-card-curator alex">Alex's pick</p>
+      <h4>Abel's Theorem Through Problems</h4>
+      <p class="author">V.B. Alekseev</p>
+      <p>Group theory through problems, leading to one of the most fundamental results in mathematics. Complex numbers, Riemann surfaces, Galois groups &mdash; built from scratch through problem-solving.</p>
+      <p class="duration">~3 months &middot; 352 problems</p>
+    </div>
+    <div class="book-card reveal">
+      <p class="book-card-curator vika">Vika's pick</p>
+      <h4>QFT in a Nutshell</h4>
+      <p class="author">Anthony Zee</p>
+      <p>An intuitive, concept-driven introduction to quantum field theory. Physical insight first, formalism second &mdash; but with real equations to play with. Draw your own Feynman diagrams.</p>
+      <p class="duration">Selected chapters</p>
+    </div>
+    <div class="book-card reveal">
+      <p class="book-card-curator alex">Alex's pick</p>
+      <h4>Indra's Pearls</h4>
+      <p class="author">Mumford, Series &amp; Wright</p>
+      <p>The best book on fractals. Pseudocode ready for implementation, stunning visualizations, and a deep dive into the mathematics of Felix Klein's vision.</p>
+      <p class="duration">~4 months &middot; 12 chapters</p>
+    </div>
+    <div class="book-card reveal">
+      <p class="book-card-curator vika">Vika's pick</p>
+      <h4>The Science of Interstellar</h4>
+      <p class="author">Kip Thorne</p>
+      <p>The real physics behind the film. Black holes, relativity, time dilation &mdash; with equations and order-of-magnitude estimates. What did the movie get right?</p>
+      <p class="duration">Selected chapters</p>
+    </div>
+    <div class="book-card reveal">
+      <p class="book-card-curator alex">Alex's pick</p>
+      <h4>The Road to Reality</h4>
+      <p class="author">Roger Penrose</p>
+      <p>A thousand-page journey through modern physics. Narrative-driven but with real problems &mdash; some famously hard. The ultimate concept map.</p>
+      <p class="duration">~9 months &middot; 34 chapters</p>
+    </div>
+    <div class="book-card reveal">
+      <p class="book-card-curator vika">Vika's pick</p>
+      <h4>The Black Hole War</h4>
+      <p class="author">Leonard Susskind</p>
+      <p>The debate over black hole information loss. Argue both sides &mdash; Hawking vs Susskind &mdash; then resolve using holography. Understanding through contradiction.</p>
+      <p class="duration">Full book</p>
+    </div>
+    <div class="book-card reveal">
+      <p class="book-card-curator alex">Alex's pick</p>
+      <h4>Digestible Quantum Field Theory</h4>
+      <p class="author">Andrey Smilga</p>
+      <p>Bridges undergraduate physics and QFT without oversimplifying. A narrative exploration packed with new concepts &mdash; we'd create our own problem sets as we go.</p>
+      <p class="duration">~5 months &middot; 17 chapters</p>
+    </div>
+    <div class="book-card reveal">
+      <p class="book-card-curator vika">Vika's pick</p>
+      <h4>Flatland</h4>
+      <p class="author">Edwin Abbott</p>
+      <p>A geometric allegory exploring dimensions beyond our own. Translate concepts from AdS/CFT into 2D analogies. What information is lost between dimensions?</p>
+      <p class="duration">Short read</p>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section id="team">
+  <div class="reveal">
+    <p class="section-label">// who we are</p>
+    <h2 class="section-title">The people behind the club</h2>
+  </div>
+  <div class="team-grid">
+    <div class="person-card reveal">
+      <div class="person-avatar vika">V</div>
+      <h3>Dr. Victoria Porozova</h3>
+      <p class="person-role">Theoretical Physicist &middot; Co-organizer</p>
+      <p>
+        PhD from Peter the Great St.&nbsp;Petersburg Polytechnic University, trained in the Landau school of theoretical physics.
+        Postdoctoral researcher at IMPA. Research spans quantum optics, quantum information,
+        quantum finance, and spacetime emergence. CSO and co-founder of Raydian and Quant.Bond.
+      </p>
+      <div class="person-links">
+        <a href="https://instagram.com/victoriaporozova" target="_blank">Instagram (132k)</a>
+        <a href="https://scholar.google.com/citations?user=8-hHUt4AAAAJ" target="_blank">Google Scholar</a>
+      </div>
+    </div>
+    <div class="person-card reveal">
+      <div class="person-avatar alex">A</div>
+      <h3>Alexander Yartsev</h3>
+      <p class="person-role">Psychologist &amp; Researcher &middot; Co-organizer</p>
+      <p>
+        Counselling psychologist, currently at mentaltech working on semantic graphs of psychotherapeutic sessions.
+        Author of <a href="https://www.riverlab.ai/papers/the-grand-awakening.html" style="color:var(--accent);">&ldquo;The Grand Awakening&rdquo;</a>
+        at Riverlab &mdash; exploring how evolution drives matter toward computation through causal efficacy and niche construction.
+        Recently Vika's student in quantum mechanics and quantum computing.
+      </p>
+      <div class="person-links">
+        <a href="https://www.riverlab.ai/papers/the-grand-awakening.html" target="_blank">The Grand Awakening</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- JOIN -->
+<section id="join">
+  <div class="reveal">
+    <p class="section-label">// ready?</p>
+    <h2 class="section-title">Join the club</h2>
+    <p class="section-subtitle" style="margin: 0 auto 1.5rem;">
+      Weekly meetings, curated reading, and a community of curious minds. Follow Vika on Instagram for updates.
+    </p>
+    <div class="btn-group" style="margin-top: 2rem;">
+      <!-- TODO: Replace href with actual payment / WhatsApp / sign-up link -->
+      <a href="#" class="btn btn-join" onclick="alert('Sign-up coming soon! Contact us for details.'); return false;">Join the Club</a>
+      <a href="https://instagram.com/victoriaporozova" class="btn btn-secondary" target="_blank">Follow on Instagram</a>
+    </div>
+    <img src="Gemini_Generated_Image_sf1z6xsf1z6xsf1z.png" alt="Vika's Physics Club" class="join-image" loading="lazy">
+  </div>
+</section>
+
+<footer>
+  <p>Vika's Physics Club &mdash; 2026</p>
+</footer>
+
+<script>
+// ════════════════════════════════════════
+// WEBGL PHASE PORTRAIT
+// ════════════════════════════════════════
+
+const VERT_SRC = `
+  attribute vec2 a_pos;
+  void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
+`;
+
+const FRAG_HERO = `
+  precision highp float;
+  uniform vec2 u_res;
+  uniform float u_time;
+
+  vec2 cmul(vec2 a, vec2 b) { return vec2(a.x*b.x-a.y*b.y, a.x*b.y+a.y*b.x); }
+
+  vec3 hsl2rgb(float h, float s, float l) {
+    float c = (1.0 - abs(2.0*l - 1.0)) * s;
+    float x = c * (1.0 - abs(mod(h*6.0, 2.0) - 1.0));
+    float m = l - c*0.5;
+    vec3 rgb;
+    float hh = h * 6.0;
+    if      (hh < 1.0) rgb = vec3(c, x, 0);
+    else if (hh < 2.0) rgb = vec3(x, c, 0);
+    else if (hh < 3.0) rgb = vec3(0, c, x);
+    else if (hh < 4.0) rgb = vec3(0, x, c);
+    else if (hh < 5.0) rgb = vec3(x, 0, c);
+    else               rgb = vec3(c, 0, x);
+    return rgb + m;
+  }
+
+  void main() {
+    vec2 uv = (gl_FragCoord.xy - u_res * 0.5) / min(u_res.x, u_res.y) * 5.0;
+    float a = u_time * 0.04;
+    float ca = cos(a), sa = sin(a);
+    uv = vec2(uv.x*ca - uv.y*sa, uv.x*sa + uv.y*ca);
+    vec2 z = uv;
+    vec2 z2 = cmul(z, z);
+    vec2 z3 = cmul(z2, z);
+    vec2 z5 = cmul(z3, z2);
+    vec2 fz = z5 - vec2(1.0, 0.0);
+    float phase = atan(fz.y, fz.x);
+    float hue = (phase + 3.14159265) / 6.28318530;
+    float modulus = length(fz);
+    float logm = log2(max(modulus, 0.00001));
+    float bright = 0.5 + 0.35 * atan(logm) * 0.63662;
+    bright *= 0.75 + 0.25 * cos(6.28318 * logm);
+    bright = clamp(bright, 0.08, 0.92);
+    vec3 col = hsl2rgb(fract(hue), 0.78, bright);
+    gl_FragColor = vec4(col, 1.0);
+  }
+`;
+
+const FRAG_DEMO = `
+  precision highp float;
+  uniform vec2 u_res;
+  uniform float u_func;
+
+  vec2 cmul(vec2 a, vec2 b) { return vec2(a.x*b.x-a.y*b.y, a.x*b.y+a.y*b.x); }
+  vec2 cdiv(vec2 a, vec2 b) {
+    float d = dot(b, b);
+    return vec2(a.x*b.x+a.y*b.y, a.y*b.x-a.x*b.y) / max(d, 1e-10);
+  }
+  vec2 csin(vec2 z) {
+    float ey = exp(z.y), emy = exp(-z.y);
+    return vec2(sin(z.x)*(ey+emy)*0.5, cos(z.x)*(ey-emy)*0.5);
+  }
+
+  vec3 hsl2rgb(float h, float s, float l) {
+    float c = (1.0 - abs(2.0*l - 1.0)) * s;
+    float x = c * (1.0 - abs(mod(h*6.0, 2.0) - 1.0));
+    float m = l - c*0.5;
+    vec3 rgb;
+    float hh = h * 6.0;
+    if      (hh < 1.0) rgb = vec3(c, x, 0);
+    else if (hh < 2.0) rgb = vec3(x, c, 0);
+    else if (hh < 3.0) rgb = vec3(0, c, x);
+    else if (hh < 4.0) rgb = vec3(0, x, c);
+    else if (hh < 5.0) rgb = vec3(x, 0, c);
+    else               rgb = vec3(c, 0, x);
+    return rgb + m;
+  }
+
+  void main() {
+    vec2 uv = (gl_FragCoord.xy - u_res * 0.5) / min(u_res.x, u_res.y) * 5.0;
+    vec2 z = uv;
+    vec2 fz;
+    if (u_func < 0.5) {
+      fz = cmul(z, z);
+    } else if (u_func < 1.5) {
+      fz = cmul(cmul(z, z), z) - vec2(1.0, 0.0);
+    } else if (u_func < 2.5) {
+      fz = cdiv(vec2(1.0, 0.0), z);
+    } else if (u_func < 3.5) {
+      fz = csin(z);
+    } else {
+      vec2 z2 = cmul(z, z);
+      fz = cdiv(z2 - vec2(1, 0), z2 + vec2(1, 0));
+    }
+    float phase = atan(fz.y, fz.x);
+    float hue = (phase + 3.14159265) / 6.28318530;
+    float modulus = length(fz);
+    float logm = log2(max(modulus, 0.00001));
+    float bright = 0.5 + 0.35 * atan(logm) * 0.63662;
+    bright *= 0.75 + 0.25 * cos(6.28318 * logm);
+    bright = clamp(bright, 0.08, 0.92);
+    vec3 col = hsl2rgb(fract(hue), 0.82, bright);
+    gl_FragColor = vec4(col, 1.0);
+  }
+`;
+
+function initGL(canvas, vertSrc, fragSrc) {
+  const gl = canvas.getContext('webgl', { antialias: false });
+  if (!gl) return null;
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
+      console.error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, vertSrc));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fragSrc));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, 'a_pos');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  return { gl, prog };
+}
+
+// ── HERO ──
+(function initHero() {
+  const canvas = document.getElementById('hero-canvas');
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function resize() {
+    const s = 0.5; // render at half res for perf
+    canvas.width = canvas.clientWidth * dpr * s;
+    canvas.height = canvas.clientHeight * dpr * s;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  const ctx = initGL(canvas, VERT_SRC, FRAG_HERO);
+  if (!ctx) return;
+  const { gl, prog } = ctx;
+  const uRes = gl.getUniformLocation(prog, 'u_res');
+  const uTime = gl.getUniformLocation(prog, 'u_time');
+  function frame(t) {
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(uRes, canvas.width, canvas.height);
+    gl.uniform1f(uTime, t * 0.001);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+// ── DEMO ──
+(function initDemo() {
+  const canvas = document.getElementById('demo-canvas');
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = 600 * dpr;
+  canvas.height = 450 * dpr;
+  const ctx = initGL(canvas, VERT_SRC, FRAG_DEMO);
+  if (!ctx) return;
+  const { gl, prog } = ctx;
+  const uRes = gl.getUniformLocation(prog, 'u_res');
+  const uFunc = gl.getUniformLocation(prog, 'u_func');
+  let currentFunc = 0;
+  function render() {
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(uRes, canvas.width, canvas.height);
+    gl.uniform1f(uFunc, currentFunc);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+  render();
+
+  document.querySelectorAll('.func-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.func-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFunc = parseFloat(btn.dataset.func);
+      render();
+    });
+  });
+
+  // Hover readout
+  const readout = document.getElementById('demo-readout');
+  const funcs = [
+    (x,y) => { let r=x*x-y*y, i=2*x*y; return [r,i]; },
+    (x,y) => { let x2=x*x-y*y, y2=2*x*y; return [x*x2-y*y2-1, x*y2+y*x2]; },
+    (x,y) => { let d=x*x+y*y||1e-10; return [x/d, -y/d]; },
+    (x,y) => [Math.sin(x)*Math.cosh(y), Math.cos(x)*Math.sinh(y)],
+    (x,y) => {
+      let ax=x*x-y*y, ay=2*x*y;
+      let nx=ax-1, ny=ay, dx=ax+1, dy=ay;
+      let d=dx*dx+dy*dy||1e-10;
+      return [(nx*dx+ny*dy)/d, (ny*dx-nx*dy)/d];
+    }
+  ];
+  const funcNames = ['z²', 'z³−1', '1/z', 'sin(z)', '(z²−1)/(z²+1)'];
+
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = 1 - (e.clientY - rect.top) / rect.height;
+    const scale = 5;
+    const ar = rect.width / rect.height;
+    let x, y;
+    if (ar > 1) {
+      x = (px - 0.5) * scale * ar;
+      y = (py - 0.5) * scale;
+    } else {
+      x = (px - 0.5) * scale;
+      y = (py - 0.5) * scale / ar;
+    }
+    const [re, im] = funcs[currentFunc](x, y);
+    const sign = im >= 0 ? '+' : '−';
+    readout.textContent = `z = ${x.toFixed(2)} ${y>=0?'+':'−'} ${Math.abs(y).toFixed(2)}i    →    ${funcNames[currentFunc]} = ${re.toFixed(3)} ${sign} ${Math.abs(im).toFixed(3)}i`;
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    readout.textContent = 'Hover over the portrait to inspect values';
+  });
+})();
+
+// ── FLOATING SYMBOLS ──
+(function initSymbols() {
+  const container = document.getElementById('floating-symbols');
+  const symbols = ['∫','∂','ψ','ℏ','∇','Σ','∞','π','λ','Ω','ζ','φ','δ','∮','⟨ψ|','|φ⟩','e^iπ','∂²','dx','dz'];
+  for (let i = 0; i < 15; i++) {
+    const span = document.createElement('span');
+    span.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    span.style.left = Math.random() * 100 + '%';
+    span.style.animationDuration = (20 + Math.random() * 30) + 's';
+    span.style.animationDelay = (-Math.random() * 40) + 's';
+    span.style.fontSize = (1.2 + Math.random() * 1.5) + 'rem';
+    container.appendChild(span);
+  }
+})();
+
+// ── SCROLL REVEAL ──
+(function initReveal() {
+  const els = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  els.forEach(el => observer.observe(el));
+})();
+</script>
+</body>
+</html>

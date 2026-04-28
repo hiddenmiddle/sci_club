@@ -1,0 +1,7 @@
+.claude/
+*.pdf
+*.jpg
+.DS_Store
+CLAUDE.md
+telegram_messages.md
+Books++*.md
