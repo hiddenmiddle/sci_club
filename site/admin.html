@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin — Vika's Physics Club</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="club.css">
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><a href="/"><span>V</span>ika's Physics Club</a></div>
+</nav>
+
+<!-- LOGIN -->
+<main id="login-view" class="page" style="display:none">
+  <p class="page-label">// admin</p>
+  <h1>Members dashboard</h1>
+  <p class="page-subtitle">Sign in to view members and payments.</p>
+  <div id="login-notice" class="notice"></div>
+  <form id="login-form" class="card" novalidate>
+    <div class="field">
+      <label for="l-email"><b>Email</b></label>
+      <input type="email" id="l-email" required autocomplete="username">
+    </div>
+    <div class="field">
+      <label for="l-password"><b>Password</b></label>
+      <input type="password" id="l-password" required autocomplete="current-password">
+    </div>
+    <button type="submit" id="login-btn" class="btn btn-join btn-block">Sign in</button>
+  </form>
+</main>
+
+<!-- DASHBOARD -->
+<main id="dash-view" class="page wide" style="display:none">
+  <div class="topline">
+    <div>
+      <p class="page-label">// admin</p>
+      <h1 style="font-size:1.6rem">Members dashboard</h1>
+    </div>
+    <div style="display:flex; align-items:center; gap:1rem">
+      <span class="who" id="who"></span>
+      <button id="logout-btn" class="btn btn-secondary" style="padding:0.5rem 1.2rem; font-size:0.85rem">Log out</button>
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th></th><th>Name</th><th>Email</th><th>Telegram</th><th>Status</th>
+          <th>From</th><th>Paid total</th><th>Invite sent</th><th>Joined</th>
+        </tr>
+      </thead>
+      <tbody id="members-body"></tbody>
+    </table>
+  </div>
+  <p class="dim" style="font-size:0.8rem; margin-top:0.8rem">Click a row to see the full registration answers and payment history.</p>
+</main>
+
+<footer><p>Vika's Physics Club &mdash; admin</p></footer>
+
+<script>
+(function () {
+  var loginView = document.getElementById('login-view');
+  var dashView = document.getElementById('dash-view');
+  var loginNotice = document.getElementById('login-notice');
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fmtDate(d) {
+    if (!d) return '—';
+    var t = new Date(d);
+    return isNaN(t) ? '—' : t.toISOString().slice(0, 10);
+  }
+  function money(cents, cur) {
+    if (cents == null) return '—';
+    return (cents / 100).toFixed(2) + ' ' + (cur || 'usd').toUpperCase();
+  }
+  function badge(status) {
+    return '<span class="badge ' + esc(status) + '">' + esc(String(status).replace('_', ' ')) + '</span>';
+  }
+
+  async function load() {
+    try {
+      var res = await fetch('/api/admin/data', { cache: 'no-store' });
+      if (!res.ok) { loginView.style.display = ''; dashView.style.display = 'none'; return; }
+      var data = await res.json();
+      render(data);
+      loginView.style.display = 'none';
+      dashView.style.display = '';
+    } catch (err) {
+      loginView.style.display = '';
+      dashView.style.display = 'none';
+    }
+  }
+
+  function render(data) {
+    document.getElementById('who').textContent = 'Signed in as ' + data.admin;
+
+    var counts = { active: 0, pending_payment: 0, past_due: 0, canceled: 0 };
+    data.members.forEach(function (m) { if (counts[m.status] != null) counts[m.status]++; });
+    var revenue = data.payments.reduce(function (s, p) { return p.status === 'paid' ? s + (p.amount_cents || 0) : s; }, 0);
+    document.getElementById('stats').innerHTML =
+      '<div class="stat"><div class="n">' + counts.active + '</div><div class="l">active members</div></div>' +
+      '<div class="stat"><div class="n">' + counts.pending_payment + '</div><div class="l">pending payment</div></div>' +
+      '<div class="stat"><div class="n">' + counts.past_due + '</div><div class="l">past due</div></div>' +
+      '<div class="stat"><div class="n">' + counts.canceled + '</div><div class="l">canceled</div></div>' +
+      '<div class="stat"><div class="n">$' + (revenue / 100).toFixed(0) + '</div><div class="l">collected (all time)</div></div>';
+
+    var paymentsByMember = {};
+    data.payments.forEach(function (p) {
+      (paymentsByMember[p.member_id] = paymentsByMember[p.member_id] || []).push(p);
+    });
+
+    var tbody = document.getElementById('members-body');
+    tbody.innerHTML = '';
+    data.members.forEach(function (m) {
+      var pays = paymentsByMember[m.id] || [];
+      var paidTotal = pays.reduce(function (s, p) { return p.status === 'paid' ? s + (p.amount_cents || 0) : s; }, 0);
+
+      var row = document.createElement('tr');
+      row.className = 'member-row';
+      row.innerHTML =
+        '<td class="dim">▸</td>' +
+        '<td>' + esc(m.name) + '</td>' +
+        '<td class="mono">' + esc(m.email) + '</td>' +
+        '<td class="mono">' + esc(m.telegram_handle) + '</td>' +
+        '<td>' + badge(m.status) + '</td>' +
+        '<td>' + esc([m.city, m.country].filter(Boolean).join(', ') || '—') + '</td>' +
+        '<td>' + (paidTotal ? '$' + (paidTotal / 100).toFixed(2) : '—') + '</td>' +
+        '<td>' + (m.welcome_email_sent_at ? '✓ ' + fmtDate(m.welcome_email_sent_at) : '—') + '</td>' +
+        '<td class="dim">' + fmtDate(m.created_at) + '</td>';
+
+      var detail = document.createElement('tr');
+      detail.className = 'detail-row';
+      detail.style.display = 'none';
+      var payRows = pays.length
+        ? pays.map(function (p) {
+            return '<tr><td>' + fmtDate(p.paid_at || p.created_at) + '</td>' +
+                   '<td>' + badge(p.status) + '</td>' +
+                   '<td>' + money(p.amount_cents, p.currency) + '</td>' +
+                   '<td class="mono dim">' + esc(p.stripe_invoice_id || '') + '</td></tr>';
+          }).join('')
+        : '<tr><td colspan="4" class="dim">no payments yet</td></tr>';
+      detail.innerHTML =
+        '<td colspan="9">' +
+          '<div class="detail-grid">' +
+            '<div><div class="k">background</div><div class="v">' + esc(m.background || '—') + '</div></div>' +
+            '<div><div class="k">found us via</div><div class="v">' + esc(m.referral_source || '—') + '</div></div>' +
+            '<div><div class="k">motivation</div><div class="v">' + esc(m.motivation || '—') + '</div></div>' +
+            '<div><div class="k">stripe customer</div><div class="v mono">' + esc(m.stripe_customer_id || '—') + '</div></div>' +
+          '</div>' +
+          '<div class="table-wrap" style="margin-top:0.6rem"><table>' +
+            '<thead><tr><th>Date</th><th>Status</th><th>Amount</th><th>Invoice</th></tr></thead>' +
+            '<tbody>' + payRows + '</tbody>' +
+          '</table></div>' +
+        '</td>';
+
+      row.addEventListener('click', function () {
+        var open = detail.style.display !== 'none';
+        detail.style.display = open ? 'none' : '';
+        row.firstChild.textContent = open ? '▸' : '▾';
+      });
+
+      tbody.appendChild(row);
+      tbody.appendChild(detail);
+    });
+  }
+
+  document.getElementById('login-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var btn = document.getElementById('login-btn');
+    btn.disabled = true; btn.textContent = 'Signing in…';
+    loginNotice.className = 'notice';
+    try {
+      var res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          email: document.getElementById('l-email').value,
+          password: document.getElementById('l-password').value
+        })
+      });
+      if (res.ok) { await load(); }
+      else {
+        loginNotice.className = 'notice show error';
+        loginNotice.textContent = 'Wrong email or password.';
+      }
+    } catch (err) {
+      loginNotice.className = 'notice show error';
+      loginNotice.textContent = 'Network error — try again.';
+    }
+    btn.disabled = false; btn.textContent = 'Sign in';
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async function () {
+    await fetch('/api/admin/logout', { method: 'POST' });
+    location.reload();
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

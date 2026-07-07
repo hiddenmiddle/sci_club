@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Join — Vika's Physics Club</title>
+<meta name="description" content="Become a member of Vika's Physics Club — weekly theoretical physics reading seminars. $15/month.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="club.css">
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><a href="/"><span>V</span>ika's Physics Club</a></div>
+</nav>
+
+<main class="page">
+  <p class="page-label">// membership</p>
+  <h1>Join the club</h1>
+  <p class="page-subtitle">Tell us a little about yourself, then you'll be taken to a secure Stripe checkout.
+  After payment, your Telegram group invite lands in your inbox.</p>
+
+  <div class="price-card">
+    <span class="price">$15</span><span class="per">/ month</span>
+    <span class="terms">Weekly ~1.5h meetings · curated reading · cancel anytime · payments handled by Stripe</span>
+  </div>
+
+  <div id="notice" class="notice"></div>
+
+  <form id="join-form" class="card" novalidate>
+    <div class="field">
+      <label for="name"><b>Name</b> <span class="req">*</span></label>
+      <input type="text" id="name" name="name" required autocomplete="name" placeholder="Your full name">
+    </div>
+    <div class="field">
+      <label for="email"><b>Email</b> <span class="req">*</span> <span class="dim">— your Telegram invite goes here</span></label>
+      <input type="email" id="email" name="email" required autocomplete="email" placeholder="you@example.com">
+    </div>
+    <div class="field">
+      <label for="telegram"><b>Telegram handle</b> <span class="req">*</span></label>
+      <input type="text" id="telegram" name="telegram_handle" required placeholder="@yourhandle">
+    </div>
+    <div class="field">
+      <label for="country"><b>Country</b> <span class="req">*</span></label>
+      <input type="text" id="country" name="country" required autocomplete="country-name" placeholder="Where are you based?">
+    </div>
+    <div class="field">
+      <label for="city">City</label>
+      <input type="text" id="city" name="city" autocomplete="address-level2" placeholder="Optional">
+    </div>
+    <div class="field">
+      <label for="background">Physics / math background</label>
+      <select id="background" name="background">
+        <option value="">Prefer not to say</option>
+        <option>No formal background — curious mind</option>
+        <option>Self-taught</option>
+        <option>Undergraduate studies</option>
+        <option>Graduate studies (MSc)</option>
+        <option>PhD or beyond</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="referral">How did you find the club?</label>
+      <select id="referral" name="referral_source">
+        <option value="">Select…</option>
+        <option>Vika's Instagram</option>
+        <option>A friend</option>
+        <option>Search / internet</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="motivation">What do you want from the club?</label>
+      <textarea id="motivation" name="motivation" placeholder="Motivation, expectations, topics you dream about…"></textarea>
+    </div>
+    <!-- honeypot -->
+    <div class="hp" aria-hidden="true">
+      <label for="website">Website</label>
+      <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+    </div>
+    <button type="submit" id="submit-btn" class="btn btn-join btn-block">Continue to payment →</button>
+    <p class="dim" style="font-size:0.8rem; margin-top:0.8rem; text-align:center">
+      You'll be redirected to Stripe. We never see your card details.
+    </p>
+  </form>
+</main>
+
+<footer><p>Vika's Physics Club &mdash; 2026</p></footer>
+
+<script>
+(function () {
+  var form = document.getElementById('join-form');
+  var btn = document.getElementById('submit-btn');
+  var notice = document.getElementById('notice');
+
+  function show(kind, html) {
+    notice.className = 'notice show ' + kind;
+    notice.innerHTML = html;
+    notice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  if (new URLSearchParams(location.search).get('canceled')) {
+    show('info', 'Payment was canceled — no worries. Your details are safe to re-submit whenever you\'re ready.');
+  }
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    btn.disabled = true;
+    btn.textContent = 'Redirecting to secure checkout…';
+    notice.className = 'notice';
+
+    var data = {};
+    new FormData(form).forEach(function (v, k) { data[k] = v; });
+
+    try {
+      var res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      var out = await res.json().catch(function () { return {}; });
+      if (res.ok && out.url) { location.href = out.url; return; }
+      if (res.status === 409) {
+        show('info', 'This email already belongs to an active member 🎉 If that\'s you and something is off, message us on <a href="https://api.whatsapp.com/send/?phone=5521999942603&text=Hi%2C+about+my+club+membership" target="_blank" rel="noopener" style="color:inherit">WhatsApp</a>.');
+      } else {
+        show('error', (out && out.message) || 'Something went wrong — please try again in a minute.');
+      }
+    } catch (err) {
+      show('error', 'Network error — please check your connection and try again.');
+    }
+    btn.disabled = false;
+    btn.textContent = 'Continue to payment →';
+  });
+})();
+</script>
+</body>
+</html>

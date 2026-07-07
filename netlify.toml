@@ -1,0 +1,9 @@
+# Vika's Physics Club — Netlify configuration
+# Static site published from site/, membership API in netlify/functions/
+# (function routes are declared per-file via `export const config = { path: ... }`)
+
+[build]
+  publish = "site"
+
+[functions]
+  directory = "netlify/functions"

@@ -5,3 +5,7 @@
 CLAUDE.md
 telegram_messages.md
 Books++*.md
+.env
+.env.*
+node_modules/
+.netlify/
