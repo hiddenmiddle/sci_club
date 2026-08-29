@@ -238,8 +238,22 @@
       font-size: 0.92rem;
     }
 
-    /* ── FIRST BOOK ── */
-    #first-book { background: var(--bg-alt); max-width: 100%; }
+    /* ── CURRENT BOOK ── */
+    #current-book { background: var(--bg-alt); max-width: 100%; }
+    /* ── PAST BOOKS ── */
+    #past-books { max-width: 100%; }
+    .book-status {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--cyan);
+      border: 1px solid rgba(77,208,225,0.3);
+      border-radius: 999px;
+      padding: 0.25rem 0.8rem;
+      margin-bottom: 1rem;
+    }
     .book-section-inner {
       max-width: 1100px;
       margin: 0 auto;
@@ -496,7 +510,8 @@
   <div class="nav-logo"><span>V</span>ika's Physics Club</div>
   <ul class="nav-links">
     <li><a href="#about">About</a></li>
-    <li><a href="#first-book">First Book</a></li>
+    <li><a href="#current-book">Current Book</a></li>
+    <li><a href="#past-books">What We've Read</a></li>
     <li><a href="#future">Explore</a></li>
     <li><a href="#team">Team</a></li>
     <li><a href="#join">Join</a></li>
@@ -513,7 +528,7 @@
     <p class="hero-tagline">A weekly reading seminar exploring the beautiful mathematics and deep ideas behind our universe</p>
     <div class="btn-group">
       <a href="#join" class="btn btn-join">Join the Club</a>
-      <a href="#first-book" class="btn btn-secondary">See what we're reading</a>
+      <a href="#current-book" class="btn btn-secondary">See what we're reading</a>
     </div>
     <p class="hero-quote">"The purpose of computing is insight, not numbers." &mdash; Richard Hamming</p>
   </div>
@@ -549,30 +564,72 @@
   </div>
 </section>
 
-<!-- FIRST BOOK -->
-<section id="first-book">
+<!-- CURRENT BOOK -->
+<section id="current-book">
   <div class="book-section-inner">
     <div class="reveal">
-      <p class="section-label">// now starting</p>
-      <h2 class="section-title">Our first book</h2>
+      <p class="section-label">// now reading</p>
+      <h2 class="section-title">Our current book</h2>
     </div>
     <div class="book-layout">
       <div class="book-info reveal">
+        <h3>Digestible Quantum Field Theory</h3>
+        <p class="book-author">Andrei Smilga</p>
+        <p class="book-description">
+          Having sharpened our complex-analysis toolkit, we're taking on the framework
+          behind all of modern particle physics. Smilga bridges undergraduate physics
+          and real quantum field theory without oversimplifying &mdash; a narrative
+          exploration packed with new concepts, from path integrals and gauge fields
+          to Feynman diagrams and the Standard Model.
+        </p>
+        <ul class="book-details">
+          <li>17 chapters over approximately 5 months</li>
+          <li>Weekly meetings, ~1.5 hours</li>
+          <li>Reading, presenting concepts and derivations</li>
+          <li>Creating our own problem sets as we go</li>
+        </ul>
+      </div>
+      <div class="demo-container reveal">
+        <div class="demo-header">
+          <div>
+            <p class="demo-title">Le Menu</p>
+            <p class="demo-subtitle">The book is literally structured as a dinner</p>
+          </div>
+        </div>
+        <ul class="book-details">
+          <li><strong>Aperitif</strong> &mdash; a first taste of what field theory is and why it matters</li>
+          <li><strong>Hors d'oeuvres</strong> &mdash; the physics we build on: relativity, quantum mechanics, symmetries</li>
+          <li><strong>Entr&eacute;es</strong> &mdash; the real thing: fields, path integrals, Feynman diagrams, the Standard Model</li>
+          <li><strong>Dessert</strong> &mdash; open questions and what lies beyond</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PAST BOOKS -->
+<section id="past-books">
+  <div class="book-section-inner">
+    <div class="reveal">
+      <p class="section-label">// completed</p>
+      <h2 class="section-title">What we've read</h2>
+    </div>
+    <div class="book-layout">
+      <div class="book-info reveal">
+        <span class="book-status">Completed</span>
         <h3>Visual Complex Functions</h3>
         <p class="book-author">Elias Wegert &mdash; An Introduction with Phase Portraits</p>
         <p class="book-description">
-          Our journey begins with one of the most visually stunning areas of mathematics.
-          Phase portraits use color to reveal the hidden structure of complex functions &mdash;
-          where zeros and poles live, how functions behave near singularities,
-          and what makes analytic functions beautiful. The hue encodes the argument (phase)
-          of the output, turning abstract algebra into vivid, intuitive images.
+          Our first book, and our journey's beginning &mdash; one of the most visually
+          stunning areas of mathematics. Phase portraits use color to reveal the hidden
+          structure of complex functions: where zeros and poles live, how functions behave
+          near singularities, and what makes analytic functions beautiful. The hue encodes
+          the argument (phase) of the output, turning abstract algebra into vivid, intuitive images.
         </p>
         <ul class="book-details">
-          <li>7 chapters over approximately 2 months</li>
-          <li>Weekly meetings led by Alex</li>
-          <li>Reading, presenting proofs and key concepts</li>
-          <li>Coding our own phase portraits in Python</li>
-          <li>Dense but short &mdash; a perfect first sprint</li>
+          <li>7 chapters over 2 months, led by Alex</li>
+          <li>Presented proofs and key concepts each week</li>
+          <li>Coded our own phase portraits in Python &mdash; try one on the right</li>
         </ul>
       </div>
       <div class="demo-container reveal">
@@ -645,13 +702,6 @@
       <p class="author">Leonard Susskind</p>
       <p>The debate over black hole information loss. Argue both sides &mdash; Hawking vs Susskind &mdash; then resolve using holography. Understanding through contradiction.</p>
       <p class="duration">Full book</p>
-    </div>
-    <div class="book-card reveal">
-      <p class="book-card-curator alex">Alex's pick</p>
-      <h4>Digestible Quantum Field Theory</h4>
-      <p class="author">Andrey Smilga</p>
-      <p>Bridges undergraduate physics and QFT without oversimplifying. A narrative exploration packed with new concepts &mdash; we'd create our own problem sets as we go.</p>
-      <p class="duration">~5 months &middot; 17 chapters</p>
     </div>
     <div class="book-card reveal">
       <p class="book-card-curator vika">Vika's pick</p>
